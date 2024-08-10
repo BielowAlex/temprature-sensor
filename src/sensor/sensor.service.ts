@@ -34,13 +34,13 @@ export class SensorService {
     const { sensorId, ...rest } = data;
 
     // Retrieve the sensor by its ID.
-    await this.getSensorById(sensorId);
+    const currentSensor = await this.getSensorById(sensorId);
 
     // Save the sensor data with the associated sensor reference.
 
     return await this.sensorDataModel.create({
       ...rest,
-      sensor: sensorId,
+      sensor: currentSensor._id,
     });
   }
 
@@ -100,11 +100,11 @@ export class SensorService {
    * @throws NotFoundException if the sensor is not found.
    */
   public async getLastSensorData(sensorId: string): Promise<SensorData> {
-    await this.getSensorById(sensorId);
+    const sensor: Sensor = await this.getSensorById(sensorId);
 
     // Find the most recent sensor data entry for the given sensor.
     return await this.sensorDataModel
-      .findOne({ sensor: sensorId })
+      .findOne({ sensor: sensor._id })
       .sort({ createdAt: -1 })
       .exec();
   }

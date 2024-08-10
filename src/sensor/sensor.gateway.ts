@@ -115,7 +115,7 @@ export class SensorGateway {
       // Retrieve and broadcast the sensor last data for the given sensor ID
       const sensorLastData: SensorData =
         await this.sensorService.getLastSensorData(sensorId);
-
+      console.log(sensorLastData);
       // Broadcast the sensor last data
       this.server.emit(`sensor_last_data_${sensorId}`, sensorLastData);
     } catch (error) {
