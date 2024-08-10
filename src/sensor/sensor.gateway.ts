@@ -10,6 +10,7 @@ import { SensorService } from './sensor.service';
 import { SensorDataDto } from './dto/sensor-data.dto';
 import { SensorData } from './schemas/sensor-data.schema';
 import { Sensor } from './schemas/sensor.schema';
+import { CreateSensorDto } from './dto/create-sensor.dto';
 
 @WebSocketGateway({
   cors: {
@@ -70,32 +71,30 @@ export class SensorGateway {
    */
   @SubscribeMessage('createSensor')
   public async handleCreateSensor(
-    @MessageBody() payload: SensorDataDto,
+    @MessageBody() payload: CreateSensorDto,
   ): Promise<void> {
-    // Create and save the new sensor data
-    const newSensor: SensorData = await this.sensorService.saveData(payload);
+    // Create and save the new sensor
+    const newSensor: Sensor = await this.sensorService.createSensor(payload);
 
     // Broadcast the new sensor data to clients
-    this.server.emit('new_sensor', { sensor: newSensor });
+    this.server.emit('new_sensor', newSensor);
   }
 
   /**
-   * Handles the 'getSensorDataList' event from a WebSocket client.
-   * Retrieves and broadcasts the sensor data list for the given sensor ID.
-   * @param payload - The sensor data for fetching the list.
+   * Handles the 'getSensorLastData' event from a WebSocket client.
+   * Retrieves and broadcasts the sensor last data for the given sensor ID.
+   * @param sensorId string
    */
-  @SubscribeMessage('getSensorDataList')
+  @SubscribeMessage('getSensorLastData')
   public async handleGetSensorDataList(
-    @MessageBody() payload: SensorDataDto,
+    @MessageBody('sensorId') sensorId: string,
   ): Promise<void> {
-    // Retrieve and broadcast the sensor data list for the given sensor ID
-    const sensorDataList: SensorData[] =
-      await this.sensorService.getAllSensorDataBySensorId(payload.sensorId);
+    // Retrieve and broadcast the sensor last data for the given sensor ID
+    const sensorLastData: SensorData =
+      await this.sensorService.getLastSensorData(sensorId);
 
-    // Broadcast the sensor data list to clients
-    this.server.emit(`sensor_data_list_${payload.sensorId}`, {
-      data: sensorDataList,
-    });
+    // Broadcast the sensor last data
+    this.server.emit(`sensor_last_data_${sensorId}`, sensorLastData);
   }
 
   /**
@@ -128,6 +127,17 @@ export class SensorGateway {
 
     // Broadcast the sensor list to clients
     this.server.emit(`sensor_list`, {
+      data: sensorList,
+    });
+  }
+  @SubscribeMessage('getAllSensorsData')
+  public async handleGetAllSensorsData(): Promise<void> {
+    // Retrieve and broadcast the list of all sensors
+    const sensorList: SensorData[] =
+      await this.sensorService.getAllSensorData();
+
+    // Broadcast the sensor list to clients
+    this.server.emit(`sensor_data_list`, {
       data: sensorList,
     });
   }

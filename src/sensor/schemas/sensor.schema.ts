@@ -4,6 +4,7 @@ import { HydratedDocument, Types } from 'mongoose';
 export type SensorDocument = HydratedDocument<Sensor>;
 
 @Schema({
+  collection: 'sensors',
   timestamps: true,
 })
 export class Sensor {

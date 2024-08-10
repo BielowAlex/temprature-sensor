@@ -4,6 +4,7 @@ import { HydratedDocument, Types } from 'mongoose';
 export type SensorDataDocument = HydratedDocument<SensorData>;
 
 @Schema({
+  collection: 'sensorData',
   timestamps: true,
 })
 export class SensorData {
@@ -12,7 +13,7 @@ export class SensorData {
   temperature: number;
   @Prop({ required: false })
   humidity: number;
-  @Prop({ type: Types.ObjectId, ref: 'Sensor', required: true })
+  @Prop({ type: Types.ObjectId, ref: 'sensor', required: true })
   sensor: Types.ObjectId;
 }
 

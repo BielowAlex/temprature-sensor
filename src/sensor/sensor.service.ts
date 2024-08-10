@@ -9,9 +9,9 @@ import { CreateSensorDto } from './dto/create-sensor.dto';
 @Injectable()
 export class SensorService {
   constructor(
-    @InjectModel(SensorData.name)
+    @InjectModel('sensorData')
     protected readonly sensorDataModel: Model<SensorDataDocument>,
-    @InjectModel(Sensor.name)
+    @InjectModel('sensors')
     protected readonly sensorModel: Model<SensorDocument>,
   ) {}
 
@@ -34,12 +34,13 @@ export class SensorService {
     const { sensorId, ...rest } = data;
 
     // Retrieve the sensor by its ID.
-    const sensor: Sensor = await this.getSensorById(sensorId);
+    await this.getSensorById(sensorId);
 
     // Save the sensor data with the associated sensor reference.
+
     return await this.sensorDataModel.create({
       ...rest,
-      sensor,
+      sensor: sensorId,
     });
   }
 
@@ -99,11 +100,11 @@ export class SensorService {
    * @throws NotFoundException if the sensor is not found.
    */
   public async getLastSensorData(sensorId: string): Promise<SensorData> {
-    const sensor: Sensor = await this.getSensorById(sensorId);
+    await this.getSensorById(sensorId);
 
     // Find the most recent sensor data entry for the given sensor.
     return await this.sensorDataModel
-      .findOne({ sensor: sensor._id })
+      .findOne({ sensor: sensorId })
       .sort({ createdAt: -1 })
       .exec();
   }
