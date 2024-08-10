@@ -51,17 +51,28 @@ export class SensorGateway {
     @ConnectedSocket() client: Socket,
     @MessageBody() payload: SensorDataDto,
   ): Promise<void> {
-    // Save the sensor data
-    await this.sensorService.saveData(payload);
+    try {
+      // Save the sensor data
+      await this.sensorService.saveData(payload);
 
-    // Retrieve the updated sensor data list for the given sensor ID
-    const sensorDataList: SensorData[] =
-      await this.sensorService.getAllSensorDataBySensorId(payload.sensorId);
+      // Retrieve the updated sensor data list for the given sensor ID
+      const sensorDataList: SensorData[] =
+        await this.sensorService.getAllSensorDataBySensorId(payload.sensorId);
 
-    // Broadcast the updated sensor data list to clients
-    this.server.emit(`sensor_data_list_${payload.sensorId}`, {
-      data: sensorDataList,
-    });
+      // Broadcast the updated sensor data list to clients
+      this.server.emit(`sensor_data_list_${payload.sensorId}`, {
+        data: sensorDataList,
+      });
+    } catch (error) {
+      // Log the error to the server console
+      console.error('Error saving sensor data:', error.message);
+
+      // Send an error message back to the client
+      client.emit('error', {
+        message: 'Failed to save sensor data',
+        details: error.message,
+      });
+    }
   }
 
   /**
@@ -73,11 +84,22 @@ export class SensorGateway {
   public async handleCreateSensor(
     @MessageBody() payload: CreateSensorDto,
   ): Promise<void> {
-    // Create and save the new sensor
-    const newSensor: Sensor = await this.sensorService.createSensor(payload);
+    try {
+      // Create and save the new sensor
+      const newSensor: Sensor = await this.sensorService.createSensor(payload);
 
-    // Broadcast the new sensor data to clients
-    this.server.emit('new_sensor', newSensor);
+      // Broadcast the new sensor data to clients
+      this.server.emit('new_sensor', newSensor);
+    } catch (error) {
+      // Log the error to the server console
+      console.error('Error creating sensor:', error.message);
+
+      // Send an error message to all clients
+      this.server.emit('error', {
+        message: 'Failed to create sensor',
+        details: error.message,
+      });
+    }
   }
 
   /**
@@ -89,12 +111,23 @@ export class SensorGateway {
   public async handleGetSensorDataList(
     @MessageBody('sensorId') sensorId: string,
   ): Promise<void> {
-    // Retrieve and broadcast the sensor last data for the given sensor ID
-    const sensorLastData: SensorData =
-      await this.sensorService.getLastSensorData(sensorId);
+    try {
+      // Retrieve and broadcast the sensor last data for the given sensor ID
+      const sensorLastData: SensorData =
+        await this.sensorService.getLastSensorData(sensorId);
 
-    // Broadcast the sensor last data
-    this.server.emit(`sensor_last_data_${sensorId}`, sensorLastData);
+      // Broadcast the sensor last data
+      this.server.emit(`sensor_last_data_${sensorId}`, sensorLastData);
+    } catch (error) {
+      // Log the error to the server console
+      console.error('Error retrieving last sensor data:', error.message);
+
+      // Send an error message to all clients
+      this.server.emit('error', {
+        message: `Failed to retrieve last data for sensor ${sensorId}`,
+        details: error.message,
+      });
+    }
   }
 
   /**
@@ -106,14 +139,25 @@ export class SensorGateway {
   public async handleGetAllSensorDataBySensorId(
     @MessageBody('sensorId') id: string,
   ): Promise<void> {
-    // Retrieve and broadcast all sensor data for the given sensor ID
-    const sensorDataList: SensorData[] =
-      await this.sensorService.getAllSensorDataBySensorId(id);
+    try {
+      // Retrieve and broadcast all sensor data for the given sensor ID
+      const sensorDataList: SensorData[] =
+        await this.sensorService.getAllSensorDataBySensorId(id);
 
-    // Broadcast the sensor data list to clients
-    this.server.emit(`sensor_data_list_${id}`, {
-      data: sensorDataList,
-    });
+      // Broadcast the sensor data list to clients
+      this.server.emit(`sensor_data_list_${id}`, {
+        data: sensorDataList,
+      });
+    } catch (error) {
+      // Log the error to the server console
+      console.error('Error retrieving sensor data:', error.message);
+
+      // Send an error message to all clients
+      this.server.emit('error', {
+        message: `Failed to retrieve data for sensor ${id}`,
+        details: error.message,
+      });
+    }
   }
 
   /**
@@ -122,23 +166,50 @@ export class SensorGateway {
    */
   @SubscribeMessage('getAllSensors')
   public async handleGetAllSensors(): Promise<void> {
-    // Retrieve and broadcast the list of all sensors
-    const sensorList: Sensor[] = await this.sensorService.getAllSensors();
+    try {
+      // Retrieve and broadcast the list of all sensors
+      const sensorList: Sensor[] = await this.sensorService.getAllSensors();
 
-    // Broadcast the sensor list to clients
-    this.server.emit(`sensor_list`, {
-      data: sensorList,
-    });
+      // Broadcast the sensor list to clients
+      this.server.emit('sensor_list', {
+        data: sensorList,
+      });
+    } catch (error) {
+      // Log the error to the server console
+      console.error('Error retrieving all sensors:', error.message);
+
+      // Send an error message to all clients
+      this.server.emit('error', {
+        message: 'Failed to retrieve sensors',
+        details: error.message,
+      });
+    }
   }
+
+  /**
+   * Handles the 'getAllSensorsData' event from a WebSocket client.
+   * Retrieves and broadcasts a list of all sensor data.
+   */
   @SubscribeMessage('getAllSensorsData')
   public async handleGetAllSensorsData(): Promise<void> {
-    // Retrieve and broadcast the list of all sensors
-    const sensorList: SensorData[] =
-      await this.sensorService.getAllSensorData();
+    try {
+      // Retrieve and broadcast the list of all sensors
+      const sensorList: SensorData[] =
+        await this.sensorService.getAllSensorData();
 
-    // Broadcast the sensor list to clients
-    this.server.emit(`sensor_data_list`, {
-      data: sensorList,
-    });
+      // Broadcast the sensor list to clients
+      this.server.emit('sensor_data_list', {
+        data: sensorList,
+      });
+    } catch (error) {
+      // Log the error to the server console
+      console.error('Error retrieving all sensor data:', error.message);
+
+      // Send an error message to all clients
+      this.server.emit('error', {
+        message: 'Failed to retrieve sensor data',
+        details: error.message,
+      });
+    }
   }
 }
